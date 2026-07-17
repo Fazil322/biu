@@ -19,7 +19,8 @@ jobs:
 
       - name: Deploy Windows 11 LTSC Container
         run: |
-          echo "Memulai kontainer Dockurr Windows..."
+          echo "Memulai kontainer Dockurr Windows dengan kode versi yang benar..."
+          # Nilai VERSION diubah menjadi "11l" sesuai dokumentasi resmi
           docker run -d --name cloud-windows-live \
             --privileged \
             --device=/dev/kvm \
@@ -27,7 +28,7 @@ jobs:
             -p 8006:8006 \
             -p 3389:3389/tcp \
             -p 3389:3389/udp \
-            -e VERSION="win11ltsc" \
+            -e VERSION="11l" \
             -e RAM_SIZE="7G" \
             -e CPU_CORES="2" \
             -e DISK_SIZE="32G" \
