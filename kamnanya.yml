@@ -1,0 +1,35 @@
+name: Secure Stealth Cloud Desktop (Tailscale)
+on: [workflow_dispatch]
+
+jobs:
+  launch-stealth-desktop:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Connect to Tailscale Network
+        uses: tailscale/github-action@v2
+        with:
+          authkey: ${{ secrets.TAILSCALE_AUTH_KEY }}
+
+      - name: Launch Kasm Ubuntu Desktop (Docker)
+        run: |
+          # Menjalankan desktop Linux di dalam Docker container
+          # Kita pakai opsi network=host agar port container langsung menyatu dengan OS Runner
+          docker run -d --name cloud-desktop \
+            --privileged \
+            --network host \
+            -e VNC_PW=passwordRahasia123 \
+            kasmweb/ubuntu-jammy-desktop:1.15.0
+
+      - name: Keep Alive & Show IP Address
+        run: |
+          # Mengambil alamat IP Tailscale dari mesin virtual ini
+          echo "=============================================="
+          echo "DESKTOP AMAN SUDAH SIAP!"
+          echo "IP Tailscale mesin ini adalah:"
+          tailscale ip -4
+          echo "Buka browser Anda dan akses: https://<IP-TAILSCALE-DI-ATAS>:6901"
+          echo "Username: kasm_user | Password: passwordRahasia123"
+          echo "=============================================="
+          
+          # Menahan GitHub Actions agar tetap hidup selama 6 jam
+          sleep 21600
