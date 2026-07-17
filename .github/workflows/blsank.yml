@@ -1,0 +1,67 @@
+name: Windows 11 LTSC with Live Logs Monitor
+on: [workflow_dispatch]
+
+jobs:
+  launch-windows-with-logs:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Connect to Tailscale Network
+        uses: tailscale/github-action@v2
+        with:
+          authkey: ${{ secrets.TAILSCALE_AUTH_KEY }}
+
+      - name: Free Disk Space for Windows ISO
+        run: |
+          echo "Membersihkan penyimpanan GitHub agar tidak penuh..."
+          sudo rm -rf /usr/share/dotnet
+          sudo rm -rf /usr/local/lib/android
+          sudo rm -rf /opt/ghc
+
+      - name: Deploy Windows 11 LTSC Container
+        run: |
+          echo "Memulai kontainer Dockurr Windows..."
+          docker run -d --name cloud-windows-live \
+            --privileged \
+            --device=/dev/kvm \
+            --cap-add NET_ADMIN \
+            -p 8006:8006 \
+            -p 3389:3389/tcp \
+            -p 3389:3389/udp \
+            -e VERSION="win11ltsc" \
+            -e RAM_SIZE="7G" \
+            -e CPU_CORES="2" \
+            -e DISK_SIZE="32G" \
+            -e ARGUMENTS="-vga virtio -display none" \
+            dockurr/windows
+
+      - name: 📺 LIVE LOGS MONITOR (Tunggu 5 Menit Sembari Memantau)
+        run: |
+          echo "=== MEMULAI MONITORING LOGS INTERNAL DOCKER ==="
+          echo "Perhatikan baris di bawah untuk melihat proses unduhan ISO Windows..."
+          echo "=========================================================="
+          
+          # Menampilkan log secara live selama 300 detik (5 menit) awal proses setup
+          timeout 300 docker logs -f cloud-windows-live || true
+          
+          echo "=========================================================="
+          echo "=== MONITORING SELESAI, LANJUT KE SESI HIDUP AMAN ==="
+
+      - name: Keep Alive & Connection Guide
+        run: |
+          IP_TAILSCALE=$(tailscale ip -4)
+          
+          echo "=============================================="
+          echo "SERVER WINDOWS 11 LTSC BERJALAN DI LATAR BELAKANG!"
+          echo "IP Tailscale Anda: $IP_TAILSCALE"
+          echo "----------------------------------------------"
+          echo "PILIHAN CARA AKSES:"
+          echo "1. MONITOR VIA BROWSER:"
+          echo "   http://$IP_TAILSCALE:8006"
+          echo "2. VIA REMOTE DESKTOP / RDP:"
+          echo "   Alamat IP: $IP_TAILSCALE"
+          echo "   Username : docker"
+          echo "   Password : (Kosongkan saja)"
+          echo "=============================================="
+          
+          # Menahan runner tetap menyala selama 6 jam
+          sleep 21600
