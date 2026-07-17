@@ -1,8 +1,8 @@
-name: Secure Stealth Cloud Desktop (Tailscale)
+name: Windows 11 LTSC Ultra-Graphics Cloud Desktop
 on: [workflow_dispatch]
 
 jobs:
-  launch-stealth-desktop:
+  launch-windows-11-ltsc:
     runs-on: ubuntu-latest
     steps:
       - name: Connect to Tailscale Network
@@ -10,26 +10,38 @@ jobs:
         with:
           authkey: ${{ secrets.TAILSCALE_AUTH_KEY }}
 
-      - name: Launch Kasm Ubuntu Desktop (Docker)
+      - name: Deploy Windows 11 LTSC with Max Graphics (Dockurr)
         run: |
-          # Menjalankan desktop Linux di dalam Docker container
-          # Kita pakai opsi network=host agar port container langsung menyatu dengan OS Runner
-          docker run -d --name cloud-desktop \
+          # Jalankan container Windows 11 LTSC (win11ltsc)
+          # Menggunakan alokasi RAM 8GB dan tipe grafis virtio untuk akselerasi visual
+          docker run -d --name cloud-windows-11-max \
             --privileged \
-            --network host \
-            -e VNC_PW=passwordRahasia123 \
-            kasmweb/ubuntu-jammy-desktop:1.15.0
+            --device=/dev/kvm \
+            --cap-add NET_ADMIN \
+            -p 8006:8006 \
+            -p 3389:3389/tcp \
+            -p 3389:3389/udp \
+            -e VERSION="win11ltsc" \
+            -e RAM_SIZE="8G" \
+            -e CPU_CORES="2" \
+            -e ARGUMENTS="-vga virtio -display none" \
+            dockurr/windows
 
-      - name: Keep Alive & Show IP Address
+      - name: Keep Alive & Connection Guide
         run: |
-          # Mengambil alamat IP Tailscale dari mesin virtual ini
+          IP_TAILSCALE=$(tailscale ip -4)
+          
           echo "=============================================="
-          echo "DESKTOP AMAN SUDAH SIAP!"
-          echo "IP Tailscale mesin ini adalah:"
-          tailscale ip -4
-          echo "Buka browser Anda dan akses: https://<IP-TAILSCALE-DI-ATAS>:6901"
-          echo "Username: kasm_user | Password: passwordRahasia123"
+          echo "SERVER WINDOWS 11 LTSC GRAFIS MAKSIMAL SIAP!"
+          echo "IP Tailscale Anda: $IP_TAILSCALE"
+          echo "----------------------------------------------"
+          echo "PILIHAN CARA AKSES:"
+          echo "1. MONITOR VIA BROWSER (Instalasi Otomatis):"
+          echo "   http://$IP_TAILSCALE:8006"
+          echo "2. VIA REMOTE DESKTOP / RDP (Grafis 60 FPS):"
+          echo "   Alamat IP: $IP_TAILSCALE"
+          echo "   Username : docker"
+          echo "   Password : (Kosongkan saja)"
           echo "=============================================="
           
-          # Menahan GitHub Actions agar tetap hidup selama 6 jam
           sleep 21600
